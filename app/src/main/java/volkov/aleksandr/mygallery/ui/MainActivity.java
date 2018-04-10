@@ -26,9 +26,7 @@ public class MainActivity extends AppCompatActivity implements ResponseListener<
     private Disk disk;
     private ImageAdapter adapter;
 
-    private static int mColumnCount = 3;
     private static int mImageWidth;
-    private static int mImageHeight;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,18 +34,34 @@ public class MainActivity extends AppCompatActivity implements ResponseListener<
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        mImageWidth = displayMetrics.widthPixels / mColumnCount;
-        mImageHeight = mImageWidth * 4 / 3;
-
-        GridLayoutManager layoutManager = new GridLayoutManager(this, mColumnCount);
-        recyclerView.setLayoutManager(layoutManager);
-        adapter = new ImageAdapter(Collections.emptyList(), mImageWidth, mImageHeight);
-        recyclerView.setAdapter(adapter);
+        initRecyclerView();
 
         disk = new Disk(getApplicationContext());
-        disk.getPublicFolder(Disk.CATS_URL, 40, this);
+        disk.getPublicFolder(Disk.CATS_URL, 20, this);
+    }
+
+    private void initRecyclerView() {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        mImageWidth = displayMetrics.widthPixels;
+
+        GridLayoutManager layoutManager = new GridLayoutManager(this, 6);
+        layoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override
+            public int getSpanSize(int position) {
+                if (adapter.getItemViewType(position) == ImageAdapter.VIEW_TYPE_TEXT) {
+                    return 6;
+                }
+                if (adapter.getScales().get(position) == ImageAdapter.SMALL_IMAGE_PREVIEW) {
+                    return 2;
+                } else {
+                    return 3;
+                }
+            }
+        });
+        recyclerView.setLayoutManager(layoutManager);
+        adapter = new ImageAdapter(Collections.emptyList(), mImageWidth);
+        recyclerView.setAdapter(adapter);
     }
 
     @Override
@@ -58,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements ResponseListener<
     @Override
     public void onResponse(List<ImageResource> response) {
         for (ImageResource imageResource : response) {
-            Log.i("image", imageResource.getName() + " " + imageResource.getCreated());
+            Log.i("image", imageResource.getName() + " " + imageResource.getPublicUrl());
         }
         adapter.setImageResources(response);
     }

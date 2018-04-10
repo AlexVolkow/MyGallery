@@ -32,8 +32,9 @@ public class Disk {
 
     private static final String PUBLIC_RESOURCE_URL =
             "cloud-api.yandex.net/v1/disk/public/resources";
+    private static final String DOWNLOAD_RESOURCE_URL = PUBLIC_RESOURCE_URL + "/download";
 
-    private RequestQueue queue;
+    private static RequestQueue queue;
 
     public Disk(Context context) {
         queue = Volley.newRequestQueue(context);
@@ -55,6 +56,16 @@ public class Disk {
         Log.i(LOG_TAG, "request for downloading folder info " + publicKey);
     }
 
+    public void getDownloadLink(final String publicUrl, final ResponseListener<String> listener) {
+        Uri.Builder builder = new Uri.Builder();
+        builder.scheme("https")
+                .encodedAuthority(DOWNLOAD_RESOURCE_URL)
+                .appendQueryParameter("public_key", encodeUrl(publicUrl));
+
+        Uri uri = builder.build();
+        addRequest(Request.Method.GET, uri, ParsingUtils::parseDownloadUrl, listener);
+        Log.i(LOG_TAG, "request for downloading file " + publicUrl);
+    }
 
     private <T> void addRequest(int method, Uri uri, JsonParser<T> parser, ResponseListener<T> listener) {
         WeakReference<ResponseListener<T>> listenerReference = new WeakReference<>(listener);

@@ -1,5 +1,6 @@
 package volkov.aleksandr.mygallery.network;
 
+import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.json.JSONArray;
@@ -43,7 +44,7 @@ public class ParsingUtils {
 
     public static ImageResource parseImageResource(JSONObject image) throws JSONException {
         ImageResource.Builder imageBuilder = ImageResource.builder();
-        imageBuilder.publicKey(image.getString("public_key"))
+        imageBuilder.publicUrl(image.getString("public_url"))
                 .name(image.getString("name"))
                 .created(parseTime(image.getString("created")))
                 .modified(parseTime(image.getString("modified")))
@@ -53,7 +54,11 @@ public class ParsingUtils {
     }
 
 
-    private static Date parseTime(String time) {
-        return DATE_FORMAT.parseDateTime(time).toDate();
+    public static String parseDownloadUrl(JSONObject json) throws JSONException {
+        return json.getString("href");
+    }
+
+    private static DateTime parseTime(String time) {
+        return DATE_FORMAT.parseDateTime(time);
     }
 }

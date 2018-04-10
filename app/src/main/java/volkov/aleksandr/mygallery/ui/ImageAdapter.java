@@ -1,87 +1,205 @@
 package volkov.aleksandr.mygallery.ui;
 
-import android.graphics.Bitmap;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Typeface;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.SparseArray;
+import android.util.SparseIntArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Transformation;
 
+import org.joda.time.DateTime;
+
+import java.util.Collections;
 import java.util.List;
 
 import volkov.aleksandr.mygallery.model.ImageResource;
+import volkov.aleksandr.mygallery.utils.DateHelper;
 
 /**
  * Created by alexa on 08.04.2018.
  */
 
-public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> {
+public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    public static final int VIEW_TYPE_IMAGE = 2;
+    public static final int VIEW_TYPE_TEXT = 1;
+
+    public static final int MIDDLE_IMAGE_PREVIEW = 2;
+    public static final int SMALL_IMAGE_PREVIEW = 3;
+
+    private SparseArray<DateTime> timestamp = new SparseArray<>();
+    private SparseIntArray offsets = new SparseIntArray();
+    private SparseIntArray scales = new SparseIntArray();
+
     private List<ImageResource> imageResources;
+
     private int mImageWidth;
     private int mImageHeight;
 
-    public ImageAdapter(List<ImageResource> imageResources, int imageWidth, int imageHeight) {
+    public ImageAdapter(List<ImageResource> imageResources, int imageWidth) {
         this.imageResources = imageResources;
-        this.mImageHeight = imageHeight;
         this.mImageWidth = imageWidth;
+        this.mImageHeight = mImageWidth * 4 / 3;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if (timestamp.indexOfKey(position) >= 0) {
+            return VIEW_TYPE_TEXT;
+        } else {
+            return VIEW_TYPE_IMAGE;
+        }
     }
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (viewType == VIEW_TYPE_TEXT) {
+            return createTextHolder(parent);
+        }
+        return createImageHolder(parent);
+    }
+
+    private RecyclerView.ViewHolder createTextHolder(ViewGroup parent) {
+        TextView textView = new TextView(parent.getContext());
+        textView.setTextSize(14f);
+        textView.setPadding(20, 60 ,20, 60);
+        textView.setTextColor(parent.getContext().getResources().getColor(android.R.color.black));
+        textView.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
+        return new TextViewHolder(textView);
+    }
+
+    private RecyclerView.ViewHolder createImageHolder(ViewGroup parent) {
         ImageView imageView = new ImageView(parent.getContext());
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(mImageWidth, mImageHeight);
-        imageView.setLayoutParams(params);
-        return new ViewHolder(imageView);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(1, 1, 1, 1);
+        imageView.setLayoutParams(lp);
+        return new ImageViewHolder(imageView);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        ImageResource imageResource = imageResources.get(position);
-        Picasso.with(holder.imageView.getContext())
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        switch (getItemViewType(position)) {
+            case VIEW_TYPE_TEXT:
+                bindTextHolder(holder, position);
+                break;
+            case VIEW_TYPE_IMAGE:
+                bindImageHolder(holder, position);
+                break;
+        }
+    }
+
+    private void bindTextHolder(RecyclerView.ViewHolder holder, int position) {
+        TextViewHolder textHolder = (TextViewHolder) holder;
+        textHolder.textView.setText(DateHelper.LONG_DATE.print(timestamp.get(position)));
+    }
+
+    private void bindImageHolder(RecyclerView.ViewHolder holder, int position) {
+        ImageViewHolder imageHolder = (ImageViewHolder) holder;
+        int pos = offsets.get(position);
+        ImageResource imageResource = imageResources.get(pos);
+
+        imageHolder.imageView.setOnClickListener(v -> openFullImage(v.getContext(), pos));
+
+        int scale = scales.get(position);
+        Picasso.with(imageHolder.imageView.getContext())
                 .load(imageResource.getPreview())
-                .resize(mImageWidth, mImageHeight)
+                .resize(mImageWidth / scale, mImageHeight / scale)
                 .centerCrop()
                 .error(android.R.drawable.stat_notify_error)
-                .into(holder.imageView);
+                .into(imageHolder.imageView);
     }
 
     @Override
     public int getItemCount() {
-        return imageResources.size();
+        return imageResources.size() + timestamp.size();
     }
 
     public void setImageResources(List<ImageResource> imageResources) {
         this.imageResources = imageResources;
+        Collections.sort(imageResources, (o1, o2) ->
+                DateHelper.DATE_COMPARATOR.compare(o2.getModified(), o1.getModified()));
+        createTimeStamps(imageResources);
         notifyDataSetChanged();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    private void createTimeStamps(List<ImageResource> imageResources) {
+        timestamp.clear();
+        offsets.clear();
+        scales.clear();
+        int offset = 0;
+        for (int i = 0; i < imageResources.size(); i++) {
+            timestamp.put(i + offset, imageResources.get(i).getModified());
+            offset++;
+            int j = i;
+            while (j < imageResources.size() &&
+                    DateHelper.DATE_COMPARATOR.compare(imageResources.get(i).getModified(),
+                            imageResources.get(j).getModified()) == 0) {
+                offsets.put(j + offset, j);
+                j++;
+            }
+            updateScale(i + offset, j + offset);
+            i = j - 1;
+        }
+    }
+
+    private void updateScale(int from, int to) {
+        int len = to - from;
+
+        boolean turn = true;
+        for (int i = 0; i < len; i++) {
+            int rest = len - i;
+            if (rest == 1) {
+                scales.put(from + i, MIDDLE_IMAGE_PREVIEW);
+            } else if (rest >= 2) {
+                int imagePreviewSize = MIDDLE_IMAGE_PREVIEW;
+                if (!turn && rest >= 3) {
+                    imagePreviewSize = SMALL_IMAGE_PREVIEW;
+                }
+                for (int j = from + i; j < from + i + imagePreviewSize; j++) {
+                    scales.put(j, imagePreviewSize);
+                }
+                i += imagePreviewSize - 1;
+                turn = !turn;
+            }
+        }
+    }
+
+    private void openFullImage(Context context, int idx) {
+        Intent intent = new Intent();
+        intent.setClass(context, FullImageActivity.class);
+        intent.putExtra(FullImageActivity.IMAGE, imageResources.get(idx));
+        intent.putExtra(FullImageActivity.CURR_IDX, idx);
+        intent.putExtra(FullImageActivity.SIZE, imageResources.size());
+        context.startActivity(intent);
+    }
+
+    public SparseIntArray getScales() {
+        return scales;
+    }
+
+    public static class ImageViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
 
-        public ViewHolder(View itemView) {
+        public ImageViewHolder(View itemView) {
             super(itemView);
             imageView = (ImageView) itemView;
         }
     }
 
-    private int calculatePreviewSize(Bitmap source) {
-        final int photoWidth = source.getWidth();
-        final int photoHeight = source.getHeight();
-        int scaleFactor = 1;
+    public static class TextViewHolder extends RecyclerView.ViewHolder {
+        TextView textView;
 
-        if (photoWidth > mImageWidth || photoHeight > mImageHeight) {
-            int halfPhotoWidth = photoWidth / 2;
-            int halfPhotoHeight = photoHeight / 2;
-            while (halfPhotoWidth / scaleFactor > mImageWidth ||
-                    halfPhotoHeight / scaleFactor > mImageHeight) {
-                scaleFactor *= 2;
-            }
+        public TextViewHolder(View itemView) {
+            super(itemView);
+            this.textView = (TextView) itemView;
         }
-        return scaleFactor;
     }
 }

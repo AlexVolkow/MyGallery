@@ -10,17 +10,13 @@ import android.support.v7.app.AlertDialog;
  * Created by AlexandrVolkov on 14.07.2017.
  */
 public class AndroidHelper {
-    public static void showAlert(Context context, String msg) {
+    public static void showAlert(Context context, String title, String msg) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Failed downloading")
+        builder.setTitle(title)
                 .setMessage(msg)
                 .setCancelable(false)
                 .setNegativeButton("OK",
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.cancel();
-                            }
-                        });
+                        (dialog, id) -> dialog.cancel());
         AlertDialog alert = builder.create();
         alert.show();
     }

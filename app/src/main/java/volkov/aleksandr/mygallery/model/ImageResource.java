@@ -3,36 +3,36 @@ package volkov.aleksandr.mygallery.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.util.Date;
+import org.joda.time.DateTime;
 
 /**
  * Created by alexa on 08.04.2018.
  */
 
 public class ImageResource implements Parcelable {
-    private String publicKey;
+    private String publicUrl;
     private String name;
-    private Date created;
-    private Date modified;
+    private DateTime created;
+    private DateTime modified;
     private String preview;
     private int size;
 
     private ImageResource() {
     }
 
-    public String getPublicKey() {
-        return publicKey;
+    public String getPublicUrl() {
+        return publicUrl;
     }
 
     public String getName() {
         return name;
     }
 
-    public Date getCreated() {
+    public DateTime getCreated() {
         return created;
     }
 
-    public Date getModified() {
+    public DateTime getModified() {
         return modified;
     }
 
@@ -49,8 +49,8 @@ public class ImageResource implements Parcelable {
     }
 
     public class Builder {
-        public Builder publicKey(String publicKey) {
-            ImageResource.this.publicKey = publicKey;
+        public Builder publicUrl(String publicUrl) {
+            ImageResource.this.publicUrl = publicUrl;
             return this;
         }
 
@@ -59,12 +59,12 @@ public class ImageResource implements Parcelable {
             return this;
         }
 
-        public Builder created(Date created) {
+        public Builder created(DateTime created) {
             ImageResource.this.created = created;
             return this;
         }
 
-        public Builder modified(Date modified) {
+        public Builder modified(DateTime modified) {
             ImageResource.this.modified = modified;
             return this;
         }
@@ -92,7 +92,7 @@ public class ImageResource implements Parcelable {
         ImageResource that = (ImageResource) o;
 
         if (size != that.size) return false;
-        if (publicKey != null ? !publicKey.equals(that.publicKey) : that.publicKey != null)
+        if (publicUrl != null ? !publicUrl.equals(that.publicUrl) : that.publicUrl != null)
             return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (created != null ? !created.equals(that.created) : that.created != null) return false;
@@ -103,7 +103,7 @@ public class ImageResource implements Parcelable {
 
     @Override
     public int hashCode() {
-        int result = publicKey != null ? publicKey.hashCode() : 0;
+        int result = publicUrl != null ? publicUrl.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (created != null ? created.hashCode() : 0);
         result = 31 * result + (modified != null ? modified.hashCode() : 0);
@@ -115,7 +115,7 @@ public class ImageResource implements Parcelable {
     @Override
     public String toString() {
         return "ImageResource{" +
-                "publicKey='" + publicKey + '\'' +
+                "publicUrl='" + publicUrl + '\'' +
                 ", name='" + name + '\'' +
                 ", created=" + created +
                 ", modified=" + modified +
@@ -131,7 +131,7 @@ public class ImageResource implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(publicKey);
+        dest.writeString(publicUrl);
         dest.writeString(name);
         dest.writeSerializable(created);
         dest.writeSerializable(modified);
@@ -140,10 +140,10 @@ public class ImageResource implements Parcelable {
     }
 
     private ImageResource(Parcel parcel) {
-        publicKey = parcel.readString();
+        publicUrl = parcel.readString();
         name = parcel.readString();
-        created = (Date) parcel.readSerializable();
-        modified = (Date) parcel.readSerializable();
+        created = (DateTime) parcel.readSerializable();
+        modified = (DateTime) parcel.readSerializable();
         preview = parcel.readString();
         size = parcel.readInt();
     }
