@@ -14,6 +14,7 @@ import java.util.List;
 import volkov.aleksandr.mygallery.model.ImageResource;
 
 import static volkov.aleksandr.mygallery.utils.LogHelper.makeLogTag;
+import static volkov.aleksandr.mygallery.db.ImageResourceContract.ImageResourceEntry;
 
 /**
  * Created by alexa on 08.04.2018.
@@ -31,7 +32,7 @@ public class ParsingUtils {
     public static List<ImageResource> parseImageResourceList(JSONObject response) throws JSONException {
         JSONObject embedded = response.getJSONObject("_embedded");
         if (embedded == null) {
-            throw new JSONException("_embedded = null(isn't a public folder)");
+            throw new JSONException("embedded = null(isn't a public folder)");
         }
         JSONArray items = embedded.getJSONArray("items");
         List<ImageResource> imageList = new ArrayList<>();
@@ -44,12 +45,12 @@ public class ParsingUtils {
 
     public static ImageResource parseImageResource(JSONObject image) throws JSONException {
         ImageResource.Builder imageBuilder = ImageResource.builder();
-        imageBuilder.publicUrl(image.getString("public_url"))
-                .name(image.getString("name"))
-                .created(parseTime(image.getString("created")))
-                .modified(parseTime(image.getString("modified")))
-                .preview(image.getString("preview"))
-                .size(image.getInt("size"));
+        imageBuilder.publicUrl(image.getString(ImageResourceEntry.COLUMN_PUBLIC_URL))
+                .name(image.getString(ImageResourceEntry.COLUMN_NAME))
+                .created(parseTime(image.getString(ImageResourceEntry.COLUMN_CREATED)))
+                .modified(parseTime(image.getString(ImageResourceEntry.COLUMN_MODIFIED)))
+                .preview(image.getString(ImageResourceEntry.COLUMN_PREVIEW))
+                .size(image.getInt(ImageResourceEntry.COLUMN_SIZE));
         return imageBuilder.build();
     }
 

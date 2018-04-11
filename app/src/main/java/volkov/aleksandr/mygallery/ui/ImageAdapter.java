@@ -2,6 +2,7 @@ package volkov.aleksandr.mygallery.ui;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -20,6 +21,7 @@ import org.joda.time.DateTime;
 import java.util.Collections;
 import java.util.List;
 
+import volkov.aleksandr.mygallery.R;
 import volkov.aleksandr.mygallery.model.ImageResource;
 import volkov.aleksandr.mygallery.utils.DateHelper;
 
@@ -42,11 +44,20 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private int mImageWidth;
     private int mImageHeight;
+    private int orientation;
 
-    public ImageAdapter(List<ImageResource> imageResources, int imageWidth) {
+    public ImageAdapter(List<ImageResource> imageResources, int imageWidth, int orientation) {
         this.imageResources = imageResources;
+        this.orientation = orientation;
         this.mImageWidth = imageWidth;
         this.mImageHeight = mImageWidth * 4 / 3;
+        init(imageResources);
+    }
+
+    private void init(List<ImageResource> imageResources) {
+        Collections.sort(imageResources, (o1, o2) ->
+                DateHelper.DATE_COMPARATOR.compare(o2.getModified(), o1.getModified()));
+        createTimeStamps(imageResources);
     }
 
     @Override
@@ -111,6 +122,7 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         int scale = scales.get(position);
         Picasso.with(imageHolder.imageView.getContext())
                 .load(imageResource.getPreview())
+                .placeholder(R.drawable.ic_looper)
                 .resize(mImageWidth / scale, mImageHeight / scale)
                 .centerCrop()
                 .error(android.R.drawable.stat_notify_error)
@@ -124,9 +136,7 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     public void setImageResources(List<ImageResource> imageResources) {
         this.imageResources = imageResources;
-        Collections.sort(imageResources, (o1, o2) ->
-                DateHelper.DATE_COMPARATOR.compare(o2.getModified(), o1.getModified()));
-        createTimeStamps(imageResources);
+        init(imageResources);
         notifyDataSetChanged();
     }
 
@@ -151,8 +161,14 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     }
 
     private void updateScale(int from, int to) {
-        int len = to - from;
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            for (int i = from; i < to; i++) {
+                scales.put(i, MIDDLE_IMAGE_PREVIEW);
+            }
+            return;
+        }
 
+        int len = to - from;
         boolean turn = true;
         for (int i = 0; i < len; i++) {
             int rest = len - i;

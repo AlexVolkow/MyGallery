@@ -23,7 +23,8 @@ import java.text.DecimalFormat;
 
 import volkov.aleksandr.mygallery.R;
 import volkov.aleksandr.mygallery.model.ImageResource;
-import volkov.aleksandr.mygallery.network.Disk;
+import volkov.aleksandr.mygallery.network.Downloader;
+import volkov.aleksandr.mygallery.network.YandexDrive;
 import volkov.aleksandr.mygallery.network.ResponseListener;
 import volkov.aleksandr.mygallery.utils.AndroidHelper;
 import volkov.aleksandr.mygallery.utils.DateHelper;
@@ -43,7 +44,8 @@ public class FullImageActivity extends AppCompatActivity implements ResponseList
     private String downloadUrl;
     private int size;
     private int currIdx;
-    private Disk disk;
+    private YandexDrive yandexDrive;
+    private Downloader downloader;
 
     private PhotoView photoView;
     private Toolbar toolbar;
@@ -54,26 +56,27 @@ public class FullImageActivity extends AppCompatActivity implements ResponseList
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_full_image);
         progressBar = findViewById(R.id.full_image_pb);
-        toolbar = findViewById(R.id.toolbar);
+        toolbar = findViewById(R.id.full_image_toolbar);
 
         photoView = findViewById(R.id.photo_view);
 
         progressBar.setVisibility(View.VISIBLE);
 
-        disk = new Disk(getApplicationContext());
+        yandexDrive = new YandexDrive(getApplicationContext());
+        downloader = new Downloader(getApplicationContext());
 
         if (savedInstanceState != null) {
             downloadUrl = savedInstanceState.getString(IMAGE_URL);
             imageResource = savedInstanceState.getParcelable(IMAGE);
             updateTitle(savedInstanceState);
             if (downloadUrl != null) {
-               loadImage(downloadUrl);
+                loadImage(downloadUrl);
             }
         } else {
             Intent intent = getIntent();
             if (intent != null) {
                 imageResource = intent.getParcelableExtra(IMAGE);
-                disk.getDownloadLink(imageResource.getPublicUrl(), this);
+                yandexDrive.getDownloadLink(imageResource.getPublicUrl(), this);
                 updateTitle(intent.getExtras());
             }
         }
@@ -110,6 +113,7 @@ public class FullImageActivity extends AppCompatActivity implements ResponseList
                 return true;
 
             case R.id.download:
+                performDownload();
                 return true;
 
             case R.id.action_share:
@@ -120,6 +124,21 @@ public class FullImageActivity extends AppCompatActivity implements ResponseList
 
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void performDownload() {
+        if (imageResource != null && downloadUrl != null) {
+            downloader.download(Uri.parse(downloadUrl), imageResource.getName());
+        } else {
+            Toast.makeText(this, "Невозможно скачать файл, попробуйте позже",
+                    Toast.LENGTH_SHORT).show();
+            if (imageResource == null) {
+                Log.e(LOG_TAG, "Unable to download file, imageResource is null");
+            }
+            if (downloadUrl == null) {
+                Log.e(LOG_TAG, "download link is not ready yet " + imageResource.getName());
+            }
         }
     }
 

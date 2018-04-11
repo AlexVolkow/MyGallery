@@ -9,11 +9,11 @@
         app:showAsAction="ifRoom"/>
 
     <item android:id="@+id/show_info"
-        android:title="info"
+        android:title="Свойства"
         app:showAsAction="never"/>
 
     <item android:id="@+id/download"
-        android:title="download"
+        android:title="Скачать"
         app:showAsAction="never" />
 
 </menu>

@@ -1,32 +1,57 @@
 package volkov.aleksandr.mygallery.ui;
 
+import android.content.res.Configuration;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.android.volley.VolleyError;
+import com.squareup.picasso.LruCache;
+import com.squareup.picasso.Picasso;
 
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import volkov.aleksandr.mygallery.R;
+import volkov.aleksandr.mygallery.db.DBService;
 import volkov.aleksandr.mygallery.model.ImageResource;
-import volkov.aleksandr.mygallery.network.Disk;
 import volkov.aleksandr.mygallery.network.ResponseListener;
+import volkov.aleksandr.mygallery.network.YandexDrive;
+
+import static volkov.aleksandr.mygallery.utils.LogHelper.makeLogTag;
 
 public class MainActivity extends AppCompatActivity implements ResponseListener<List<ImageResource>> {
+    private static final String LOG_TAG = makeLogTag(MainActivity.class);
+    public static final int LIMIT = 100;
+    public static final String IMAGE_RESOURCES = "image_resources";
+
+
     @BindView(R.id.recycler_view)
     RecyclerView recyclerView;
+    @BindView(R.id.main_toolbar)
+    Toolbar mainToolbar;
+    @BindView(R.id.main_activity_pb)
+    ProgressBar progressBar;
 
-    private Disk disk;
+    private YandexDrive yandexDrive;
+    private DBService dbService;
     private ImageAdapter adapter;
+    private List<ImageResource> resources;
 
-    private static int mImageWidth;
+    private int mImageWidth;
+    private int mPreviewSize;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,46 +59,155 @@ public class MainActivity extends AppCompatActivity implements ResponseListener<
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        initRecyclerView();
+        setSupportActionBar(mainToolbar);
+        //initPicasso();
+        initDisplayParams();
 
-        disk = new Disk(getApplicationContext());
-        disk.getPublicFolder(Disk.CATS_URL, 20, this);
+        dbService = new DBService(this);
+        yandexDrive = new YandexDrive(this);
+
+        if (savedInstanceState != null) {
+            resources = savedInstanceState.getParcelableArrayList(IMAGE_RESOURCES);
+            initRecyclerView(resources);
+            hideProgressBar();
+        } else {
+            initRecyclerView(Collections.emptyList());
+            LoadDataTask loadTask = new LoadDataTask(this);
+            loadTask.execute();
+        }
     }
 
-    private void initRecyclerView() {
+    private void hideProgressBar() {
+        progressBar.setVisibility(View.GONE);
+    }
+
+    private void initPicasso() {
+        int heapSize = (int) Runtime.getRuntime().maxMemory() / 3;
+        Picasso p = new Picasso.Builder(this)
+                .memoryCache(new LruCache(heapSize)).build();
+        Picasso.setSingletonInstance(p);
+    }
+
+    private void initDisplayParams() {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         mImageWidth = displayMetrics.widthPixels;
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            mImageWidth /= 2;
+        }
+        mPreviewSize = mImageWidth / 2;
+    }
 
-        GridLayoutManager layoutManager = new GridLayoutManager(this, 6);
+    private void initRecyclerView(List<ImageResource> resources) {
+        GridLayoutManager layoutManager = new GridLayoutManager(this, 12);
+        int orientation = getResources().getConfiguration().orientation;
         layoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
             @Override
             public int getSpanSize(int position) {
                 if (adapter.getItemViewType(position) == ImageAdapter.VIEW_TYPE_TEXT) {
-                    return 6;
+                    return 12;
+                }
+                if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    return 3;
                 }
                 if (adapter.getScales().get(position) == ImageAdapter.SMALL_IMAGE_PREVIEW) {
-                    return 2;
+                    return 4;
                 } else {
-                    return 3;
+                    return 6;
                 }
             }
         });
         recyclerView.setLayoutManager(layoutManager);
-        adapter = new ImageAdapter(Collections.emptyList(), mImageWidth);
+        adapter = new ImageAdapter(resources, mImageWidth, orientation);
         recyclerView.setAdapter(adapter);
     }
 
     @Override
     public void onErrorResponse(VolleyError error) {
-        Log.e("image", error.getMessage());
+        Log.e(LOG_TAG, "error when download from yandex.drive" + error.getMessage());
+        Toast.makeText(this, "Ошибка при загрузке данных с Яндекс.Диск, попробуйте позже",
+                Toast.LENGTH_SHORT).show();
+        hideProgressBar();
     }
 
     @Override
     public void onResponse(List<ImageResource> response) {
-        for (ImageResource imageResource : response) {
-            Log.i("image", imageResource.getName() + " " + imageResource.getPublicUrl());
-        }
+        Log.i(LOG_TAG, "successfully downloaded " + response.size() + " image resources");
+
+        resources = response;
+
+        LoadToDBTask loadToDBTask = new LoadToDBTask(dbService, response);
+        loadToDBTask.execute();
+
         adapter.setImageResources(response);
+        hideProgressBar();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList(IMAGE_RESOURCES, (ArrayList<ImageResource>) resources);
+    }
+
+    private static class LoadDataTask extends AsyncTask<Void, Void, List<ImageResource>> {
+        private WeakReference<MainActivity> activityReference;
+
+        LoadDataTask(MainActivity activity) {
+            activityReference = new WeakReference<>(activity);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            MainActivity activity = activityReference.get();
+            if (activity != null) {
+                activity.progressBar.setVisibility(View.VISIBLE);
+            }
+        }
+
+        @Override
+        protected List<ImageResource> doInBackground(Void... voids) {
+            MainActivity activity = activityReference.get();
+            if (activity != null) {
+                return activity.dbService.getAllResources();
+            } else {
+                return Collections.emptyList();
+            }
+        }
+
+        @Override
+        protected void onPostExecute(List<ImageResource> imageResources) {
+            MainActivity activity = activityReference.get();
+            if (activity != null) {
+                activity.resources = imageResources;
+                if (imageResources.isEmpty()) {
+                    performDownloading(activity);
+                } else {
+                    activity.adapter.setImageResources(imageResources);
+                    activity.hideProgressBar();
+                }
+            }
+        }
+    }
+
+    private static void performDownloading(MainActivity activity) {
+        activity.yandexDrive.getPublicFolder(YandexDrive.FOLDER_URL, LIMIT, activity.mPreviewSize, activity);
+    }
+
+    private static class LoadToDBTask extends AsyncTask<Void, Void, Void> {
+        private List<ImageResource> resources;
+        private DBService dbService;
+
+        public LoadToDBTask(DBService dbService, List<ImageResource> resources) {
+            this.resources = resources;
+            this.dbService = dbService;
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            for (ImageResource resource : resources) {
+                dbService.addImageResource(resource);
+            }
+            return null;
+        }
     }
 }
