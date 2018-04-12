@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">MyGallery</string>
     <string name="title_activity_full_image">FullImageActivity</string>
+    <string name="no_internet">Не удалось устновить интернет соединение, пожалуйста устраните неполадки и перезапустите приложение позже</string>
+    <string name="property">Свойства</string>
+    <string name="download">Скачать</string>
+    <string name="favorite">favorite</string>
 </resources>

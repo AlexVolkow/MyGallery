@@ -11,11 +11,14 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.VolleyError;
 import com.squareup.picasso.LruCache;
 import com.squareup.picasso.Picasso;
+
+import org.w3c.dom.Text;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -29,12 +32,13 @@ import volkov.aleksandr.mygallery.db.DBService;
 import volkov.aleksandr.mygallery.model.ImageResource;
 import volkov.aleksandr.mygallery.network.ResponseListener;
 import volkov.aleksandr.mygallery.network.YandexDrive;
+import volkov.aleksandr.mygallery.utils.AndroidHelper;
 
 import static volkov.aleksandr.mygallery.utils.LogHelper.makeLogTag;
 
 public class MainActivity extends AppCompatActivity implements ResponseListener<List<ImageResource>> {
     private static final String LOG_TAG = makeLogTag(MainActivity.class);
-    public static final int LIMIT = 100;
+    public static final int LIMIT = 120;
     public static final String IMAGE_RESOURCES = "image_resources";
 
 
@@ -44,6 +48,8 @@ public class MainActivity extends AppCompatActivity implements ResponseListener<
     Toolbar mainToolbar;
     @BindView(R.id.main_activity_pb)
     ProgressBar progressBar;
+    @BindView(R.id.tv_no_internet)
+    TextView noInternet;
 
     private YandexDrive yandexDrive;
     private DBService dbService;
@@ -60,12 +66,19 @@ public class MainActivity extends AppCompatActivity implements ResponseListener<
         ButterKnife.bind(this);
 
         setSupportActionBar(mainToolbar);
-        //initPicasso();
         initDisplayParams();
 
         dbService = new DBService(this);
         yandexDrive = new YandexDrive(this);
 
+        if (!AndroidHelper.hasConnection(this)) {
+            noInternet.setVisibility(View.VISIBLE);
+            return;
+        } else {
+            noInternet.setVisibility(View.GONE);
+        }
+
+        openProgressBar();
         if (savedInstanceState != null) {
             resources = savedInstanceState.getParcelableArrayList(IMAGE_RESOURCES);
             initRecyclerView(resources);
@@ -81,11 +94,8 @@ public class MainActivity extends AppCompatActivity implements ResponseListener<
         progressBar.setVisibility(View.GONE);
     }
 
-    private void initPicasso() {
-        int heapSize = (int) Runtime.getRuntime().maxMemory() / 3;
-        Picasso p = new Picasso.Builder(this)
-                .memoryCache(new LruCache(heapSize)).build();
-        Picasso.setSingletonInstance(p);
+    private void openProgressBar() {
+        progressBar.setVisibility(View.VISIBLE);
     }
 
     private void initDisplayParams() {
@@ -124,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements ResponseListener<
 
     @Override
     public void onErrorResponse(VolleyError error) {
-        Log.e(LOG_TAG, "error when download from yandex.drive" + error.getMessage());
+        Log.e(LOG_TAG, "error when download from yandex.drive " + error.getMessage());
         Toast.makeText(this, "Ошибка при загрузке данных с Яндекс.Диск, попробуйте позже",
                 Toast.LENGTH_SHORT).show();
         hideProgressBar();

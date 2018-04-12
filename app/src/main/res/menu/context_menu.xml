@@ -5,15 +5,15 @@
     <item
         android:id="@+id/action_share"
         android:icon="@drawable/ic_share"
-        android:title="favorite"
+        android:title="@string/favorite"
         app:showAsAction="ifRoom"/>
 
     <item android:id="@+id/show_info"
-        android:title="Свойства"
+        android:title="@string/property"
         app:showAsAction="never"/>
 
     <item android:id="@+id/download"
-        android:title="Скачать"
+        android:title="@string/download"
         app:showAsAction="never" />
 
 </menu>

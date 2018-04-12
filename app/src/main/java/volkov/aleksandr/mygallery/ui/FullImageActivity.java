@@ -21,11 +21,13 @@ import com.squareup.picasso.Picasso;
 
 import java.text.DecimalFormat;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import volkov.aleksandr.mygallery.R;
 import volkov.aleksandr.mygallery.model.ImageResource;
 import volkov.aleksandr.mygallery.network.Downloader;
-import volkov.aleksandr.mygallery.network.YandexDrive;
 import volkov.aleksandr.mygallery.network.ResponseListener;
+import volkov.aleksandr.mygallery.network.YandexDrive;
 import volkov.aleksandr.mygallery.utils.AndroidHelper;
 import volkov.aleksandr.mygallery.utils.DateHelper;
 
@@ -40,6 +42,13 @@ public class FullImageActivity extends AppCompatActivity implements ResponseList
     public static final String SIZE = "size";
     public static final String IMAGE_URL = "downloadUrl";
 
+    @BindView(R.id.full_image_toolbar)
+    Toolbar toolbar;
+    @BindView(R.id.full_image_pb)
+    ProgressBar progressBar;
+    @BindView(R.id.photo_view)
+    PhotoView photoView;
+
     private ImageResource imageResource;
     private String downloadUrl;
     private int size;
@@ -47,18 +56,11 @@ public class FullImageActivity extends AppCompatActivity implements ResponseList
     private YandexDrive yandexDrive;
     private Downloader downloader;
 
-    private PhotoView photoView;
-    private Toolbar toolbar;
-    private ProgressBar progressBar;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_full_image);
-        progressBar = findViewById(R.id.full_image_pb);
-        toolbar = findViewById(R.id.full_image_toolbar);
-
-        photoView = findViewById(R.id.photo_view);
+        ButterKnife.bind(this);
 
         progressBar.setVisibility(View.VISIBLE);
 

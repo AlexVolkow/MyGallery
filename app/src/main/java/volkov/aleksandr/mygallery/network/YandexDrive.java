@@ -8,6 +8,7 @@ import android.util.LruCache;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
@@ -88,7 +89,9 @@ public class YandexDrive {
             try {
                 listener.onResponse(parser.parse(cached));
             } catch (JSONException e) {
-                Log.e(LOG_TAG, "error occurred while parsing json for uri " + uri);
+                listener.onErrorResponse(new VolleyError(e.getMessage()));
+                Log.e(LOG_TAG, "error " + e.getMessage() +
+                        " occurred while parsing json for uri " + uri);
             }
             return;
         }
@@ -105,7 +108,12 @@ public class YandexDrive {
                             responseListener.onResponse(parser.parse(response));
                         }
                     } catch (JSONException e) {
-                        Log.e(LOG_TAG, "error occurred while parsing json for uri " + uri);
+                        ResponseListener<T> responseListener = listenerReference.get();
+                        if (responseListener != null) {
+                            responseListener.onErrorResponse(new VolleyError(e.getMessage()));
+                        }
+                        Log.e(LOG_TAG, "error " + e.getMessage() +
+                                " occurred while parsing json for uri " + uri);
                     }
                 }
                 , listener);

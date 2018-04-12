@@ -30,9 +30,7 @@ import volkov.aleksandr.mygallery.utils.DateHelper;
  */
 
 public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    public static final int VIEW_TYPE_IMAGE = 2;
     public static final int VIEW_TYPE_TEXT = 1;
-
     public static final int MIDDLE_IMAGE_PREVIEW = 2;
     public static final int SMALL_IMAGE_PREVIEW = 3;
 
@@ -65,7 +63,7 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         if (timestamp.indexOfKey(position) >= 0) {
             return VIEW_TYPE_TEXT;
         } else {
-            return VIEW_TYPE_IMAGE;
+            return scales.get(position);
         }
     }
 
@@ -75,21 +73,28 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         if (viewType == VIEW_TYPE_TEXT) {
             return createTextHolder(parent);
         }
-        return createImageHolder(parent);
+        if (viewType == MIDDLE_IMAGE_PREVIEW) {
+            return createImageHolder(parent, MIDDLE_IMAGE_PREVIEW);
+        }
+        return createImageHolder(parent, SMALL_IMAGE_PREVIEW);
     }
 
     private RecyclerView.ViewHolder createTextHolder(ViewGroup parent) {
         TextView textView = new TextView(parent.getContext());
         textView.setTextSize(14f);
-        textView.setPadding(20, 60 ,20, 60);
+        textView.setPadding(20, 60, 20, 60);
         textView.setTextColor(parent.getContext().getResources().getColor(android.R.color.black));
         textView.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
         return new TextViewHolder(textView);
     }
 
-    private RecyclerView.ViewHolder createImageHolder(ViewGroup parent) {
+    private RecyclerView.ViewHolder createImageHolder(ViewGroup parent, int size) {
         ImageView imageView = new ImageView(parent.getContext());
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+
+        int width = mImageWidth / size;
+        int height = mImageHeight / size;
+
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(width, height);
         lp.setMargins(1, 1, 1, 1);
         imageView.setLayoutParams(lp);
         return new ImageViewHolder(imageView);
@@ -101,7 +106,8 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             case VIEW_TYPE_TEXT:
                 bindTextHolder(holder, position);
                 break;
-            case VIEW_TYPE_IMAGE:
+            case SMALL_IMAGE_PREVIEW:
+            case MIDDLE_IMAGE_PREVIEW:
                 bindImageHolder(holder, position);
                 break;
         }
@@ -122,7 +128,6 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         int scale = scales.get(position);
         Picasso.with(imageHolder.imageView.getContext())
                 .load(imageResource.getPreview())
-                .placeholder(R.drawable.ic_looper)
                 .resize(mImageWidth / scale, mImageHeight / scale)
                 .centerCrop()
                 .error(android.R.drawable.stat_notify_error)
@@ -169,6 +174,15 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
 
         int len = to - from;
+
+        // it's optimization for three images
+        if (len == SMALL_IMAGE_PREVIEW) {
+            for (int j = from; j < to; j++) {
+                scales.put(j, SMALL_IMAGE_PREVIEW);
+            }
+            return;
+        }
+
         boolean turn = true;
         for (int i = 0; i < len; i++) {
             int rest = len - i;
