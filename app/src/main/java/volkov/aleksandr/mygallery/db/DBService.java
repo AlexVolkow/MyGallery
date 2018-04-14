@@ -14,7 +14,7 @@ import volkov.aleksandr.mygallery.model.ImageResource;
 
 import static volkov.aleksandr.mygallery.db.ImageResourceContract.ImageResourceEntry;
 /**
- * Created by alexa on 11.04.2018.
+ * Created by Alexandr Volkov on 11.04.2018.
  */
 
 public class DBService {

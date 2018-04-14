@@ -1,7 +1,7 @@
 package volkov.aleksandr.mygallery.utils;
 
 /**
- * Created by AlexandrVolkov on 07.07.2017.
+ * Created by Alexandr Volkov on 07.07.2017.
  */
 public class LogHelper {
     private static final String LOG_PREFIX = "mgl_";
@@ -15,7 +15,6 @@ public class LogHelper {
 
         return LOG_PREFIX + str;
     }
-
 
     public static String makeLogTag(Class cls) {
         return makeLogTag(cls.getSimpleName());

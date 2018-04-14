@@ -1,40 +1,34 @@
 package volkov.aleksandr.mygallery.network;
 
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import volkov.aleksandr.mygallery.model.ImageResource;
 
-import static volkov.aleksandr.mygallery.utils.LogHelper.makeLogTag;
 import static volkov.aleksandr.mygallery.db.ImageResourceContract.ImageResourceEntry;
+import static volkov.aleksandr.mygallery.utils.DateHelper.parseTime;
 
 /**
- * Created by alexa on 08.04.2018.
+ * Utilities class for parsing response from server.
  */
-
 public class ParsingUtils {
-    private static final String LOG_TAG = makeLogTag(ParsingUtils.class);
-
-    public static final DateTimeFormatter DATE_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
-
     private ParsingUtils() {
 
     }
 
+    /**
+     * Parses an object of type ResourceList
+     * {@see https://tech.yandex.ru/disk/api/reference/response-objects-docpage/#resourcelist}
+     *
+     * @param response json from server
+     * @return list of {@link ImageResource}
+     * @throws JSONException if missing required fields or if response isn't a public folder
+     */
     public static List<ImageResource> parseImageResourceList(JSONObject response) throws JSONException {
-        String error = parseError(response);
-        if (error != null) {
-            throw new JSONException(error);
-        }
-
         if (!response.has("_embedded")) {
             throw new JSONException("embedded = null(isn't a public folder)");
         }
@@ -49,12 +43,15 @@ public class ParsingUtils {
         return imageList;
     }
 
+    /**
+     * Parses an object of type Resource
+     * {@see https://tech.yandex.ru/disk/api/reference/response-objects-docpage/#resource}
+     *
+     * @param response json from server
+     * @return information about the requested resource in the form of {@link ImageResource}
+     * @throws JSONException if missing required fields
+     */
     public static ImageResource parseImageResource(JSONObject response) throws JSONException {
-        String error = parseError(response);
-        if (error != null) {
-            throw new JSONException(error);
-        }
-
         ImageResource.Builder imageBuilder = ImageResource.builder();
         imageBuilder.publicUrl(response.getString(ImageResourceEntry.COLUMN_PUBLIC_URL))
                 .name(response.getString(ImageResourceEntry.COLUMN_NAME))
@@ -65,6 +62,26 @@ public class ParsingUtils {
         return imageBuilder.build();
     }
 
+    /**
+     * Parses an object of type Link
+     * {@see https://tech.yandex.ru/disk/api/reference/response-objects-docpage/#resource}
+     *
+     * @param response json from server
+     * @return string representation of url for resource
+     * @throws JSONException if missing required fields
+     */
+    public static String parseDownloadUrl(JSONObject response) throws JSONException {
+        return response.getString("href");
+    }
+
+    /**
+     * Parses an object of type Error
+     * {@see https://tech.yandex.ru/disk/api/reference/response-objects-docpage/#error}
+     *
+     * @param response json from server
+     * @return string representation of error
+     * @throws JSONException if missing required fields
+     */
     private static String parseError(JSONObject response) throws JSONException {
         if (response.has("error")) {
             String error = response.getString("error");
@@ -74,11 +91,22 @@ public class ParsingUtils {
         return null;
     }
 
-    public static String parseDownloadUrl(JSONObject json) throws JSONException {
-        return json.getString("href");
+    /**
+     * Wrap over {@link JsonParser} which handles the error information
+     *
+     * @param parser   {@link JsonParser}
+     * @param response json from server
+     * @throws JSONException if response is error message
+     */
+    public static <T> T errorWrapper(JsonParser<T> parser, JSONObject response) throws JSONException {
+        String error = parseError(response);
+        if (error != null) {
+            throw new JSONException(error);
+        }
+        return parser.parse(response);
     }
 
-    private static DateTime parseTime(String time) {
-        return DATE_FORMAT.parseDateTime(time);
+    public interface JsonParser<T> {
+        T parse(JSONObject json) throws JSONException;
     }
 }

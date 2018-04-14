@@ -3,7 +3,7 @@ package volkov.aleksandr.mygallery.network;
 import com.android.volley.Response;
 
 /**
- * Created by AlexandrVolkov on 07.07.2017.
+ * Interface for callback from server. Extends {@link Response.Listener} and {@link Response.ErrorListener}
  */
 public interface ResponseListener<T> extends Response.Listener<T>, Response.ErrorListener {
 }

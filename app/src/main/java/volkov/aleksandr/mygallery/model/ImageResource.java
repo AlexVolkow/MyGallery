@@ -6,7 +6,7 @@ import android.os.Parcelable;
 import org.joda.time.DateTime;
 
 /**
- * Created by alexa on 08.04.2018.
+ * Created by Alexandr Volkov on 08.04.2018.
  */
 
 public class ImageResource implements Parcelable {

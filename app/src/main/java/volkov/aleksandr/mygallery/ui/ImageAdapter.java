@@ -28,16 +28,28 @@ import volkov.aleksandr.mygallery.model.ImageResource;
 import volkov.aleksandr.mygallery.utils.DateHelper;
 
 /**
- * Created by alexa on 08.04.2018.
+ * Created by Alexandr Volkov on 08.04.2018.
  */
 
 public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public static final int VIEW_TYPE_TEXT = 1;
     public static final int MIDDLE_IMAGE_PREVIEW = 2;
     public static final int SMALL_IMAGE_PREVIEW = 3;
+    public static final float TEXT_SIZE = 14f;
 
+    /**
+     * Position in adapter for time stamps.
+     */
     private SparseArray<DateTime> timestamp = new SparseArray<>();
+
+    /**
+     * Supporting information about offsets in data set.
+     */
     private SparseIntArray offsets = new SparseIntArray();
+
+    /**
+     * Information about image size.
+     */
     private SparseIntArray scales = new SparseIntArray();
 
     private List<ImageResource> imageResources;
@@ -83,7 +95,7 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private RecyclerView.ViewHolder createTextHolder(ViewGroup parent) {
         TextView textView = new TextView(parent.getContext());
-        textView.setTextSize(14f);
+        textView.setTextSize(TEXT_SIZE);
         textView.setPadding(20, 60, 20, 60);
         textView.setTextColor(parent.getContext().getResources().getColor(android.R.color.black));
         textView.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
@@ -149,6 +161,12 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         notifyDataSetChanged();
     }
 
+    /**
+     * Method create time stamps for current data set.
+     * Each time stamp corresponds to a certain day of the year.
+     *
+     * @param imageResources list of {@link ImageResource} sorted by {@link ImageResource#getModified()}
+     */
     private void createTimeStamps(List<ImageResource> imageResources) {
         timestamp.clear();
         offsets.clear();
@@ -169,7 +187,16 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
     }
 
+    /**
+     * Method update information about image size for range [from, to).
+     * The algorithm tries to alternate rows of three images with rows of two images.
+     * There are optimizations for landscape mode.
+     *
+     * @param from start of range
+     * @param to end of range
+     */
     private void updateScale(int from, int to) {
+        // it's optimization for landscape mode
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
             for (int i = from; i < to; i++) {
                 scales.put(i, MIDDLE_IMAGE_PREVIEW);

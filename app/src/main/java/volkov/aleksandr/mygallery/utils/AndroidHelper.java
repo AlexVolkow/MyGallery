@@ -7,7 +7,7 @@ import android.net.NetworkInfo;
 import android.support.v7.app.AlertDialog;
 
 /**
- * Created by AlexandrVolkov on 14.07.2017.
+ * Created by Alexandr Volkov on 14.07.2017.
  */
 public class AndroidHelper {
     public static void showAlert(Context context, String title, String msg) {
