@@ -3,9 +3,11 @@ package volkov.aleksandr.mygallery.ui;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.DisplayMetrics;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 import android.view.View;
@@ -90,12 +92,12 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private RecyclerView.ViewHolder createImageHolder(ViewGroup parent, int size) {
         ImageView imageView = new ImageView(parent.getContext());
+        imageView.setPadding(2,2,2,2);
 
         int width = mImageWidth / size;
         int height = mImageHeight / size;
 
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(width, height);
-        lp.setMargins(1, 1, 1, 1);
         imageView.setLayoutParams(lp);
         return new ImageViewHolder(imageView);
     }
@@ -128,9 +130,11 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         int scale = scales.get(position);
         Picasso.with(imageHolder.imageView.getContext())
                 .load(imageResource.getPreview())
+                .placeholder(R.color.placeholderColor)
+                .noFade()
                 .resize(mImageWidth / scale, mImageHeight / scale)
                 .centerCrop()
-                .error(android.R.drawable.stat_notify_error)
+                .error(R.drawable.ic_cat)
                 .into(imageHolder.imageView);
     }
 

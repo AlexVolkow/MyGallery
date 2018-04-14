@@ -15,10 +15,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.VolleyError;
-import com.squareup.picasso.LruCache;
-import com.squareup.picasso.Picasso;
-
-import org.w3c.dom.Text;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -146,11 +142,8 @@ public class MainActivity extends AppCompatActivity implements ResponseListener<
 
         resources = response;
 
-        LoadToDBTask loadToDBTask = new LoadToDBTask(dbService, response);
+        LoadToDBTask loadToDBTask = new LoadToDBTask(this, response);
         loadToDBTask.execute();
-
-        adapter.setImageResources(response);
-        hideProgressBar();
     }
 
     @Override
@@ -205,19 +198,32 @@ public class MainActivity extends AppCompatActivity implements ResponseListener<
 
     private static class LoadToDBTask extends AsyncTask<Void, Void, Void> {
         private List<ImageResource> resources;
-        private DBService dbService;
+        private WeakReference<MainActivity> activityReference;
 
-        public LoadToDBTask(DBService dbService, List<ImageResource> resources) {
+        public LoadToDBTask(MainActivity activity, List<ImageResource> resources) {
             this.resources = resources;
-            this.dbService = dbService;
+            this.activityReference = new WeakReference<>(activity);
         }
 
         @Override
         protected Void doInBackground(Void... voids) {
-            for (ImageResource resource : resources) {
-                dbService.addImageResource(resource);
+            MainActivity activity = activityReference.get();
+            if (activity != null) {
+                for (ImageResource resource : resources) {
+                    activity.dbService.addImageResource(resource);
+                }
+
             }
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            MainActivity activity = activityReference.get();
+            if (activity != null) {
+                activity.adapter.setImageResources(resources);
+                activity.hideProgressBar();
+            }
         }
     }
 }

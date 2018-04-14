@@ -67,18 +67,28 @@ public class FullImageActivity extends AppCompatActivity implements ResponseList
         yandexDrive = new YandexDrive(getApplicationContext());
         downloader = new Downloader(getApplicationContext());
 
+        boolean hasConnection = true;
+        if (!AndroidHelper.hasConnection(this)) {
+            Toast.makeText(this, "Проверьте подключение к интернету", Toast.LENGTH_SHORT)
+                    .show();
+            hasConnection = false;
+            progressBar.setVisibility(View.GONE);
+        }
+
         if (savedInstanceState != null) {
             downloadUrl = savedInstanceState.getString(IMAGE_URL);
             imageResource = savedInstanceState.getParcelable(IMAGE);
             updateTitle(savedInstanceState);
-            if (downloadUrl != null) {
+            if (downloadUrl != null && hasConnection) {
                 loadImage(downloadUrl);
             }
         } else {
             Intent intent = getIntent();
             if (intent != null) {
                 imageResource = intent.getParcelableExtra(IMAGE);
-                yandexDrive.getDownloadLink(imageResource.getPublicUrl(), this);
+                if (hasConnection) {
+                    yandexDrive.getDownloadLink(imageResource.getPublicUrl(), this);
+                }
                 updateTitle(intent.getExtras());
             }
         }
@@ -108,6 +118,10 @@ public class FullImageActivity extends AppCompatActivity implements ResponseList
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
+
             case R.id.show_info:
                 if (imageResource != null) {
                     AndroidHelper.showAlert(this, "Информация", createInfo(imageResource));

@@ -133,7 +133,6 @@ public class YandexDrive {
     private static List<Pair<Integer,String>> quality;
     static {
         quality = new ArrayList<>();
-        quality.add(Pair.create(150, "S"));
         quality.add(Pair.create(300, "M"));
         quality.add(Pair.create(500, "L"));
         quality.add(Pair.create(800,"XL"));
@@ -144,12 +143,7 @@ public class YandexDrive {
     private static String getPreviewSize(int previewSize) {
         Pair<Integer, String> q = Collections.min(quality,
                 (o1, o2) -> abs(o1.first - previewSize) - abs(o2.first - previewSize));
-        int idx = quality.indexOf(q);
-        if (idx == 0) {
-            return q.second;
-        } else {
-            return quality.get(idx - 1).second;
-        }
+        return q.second;
     }
 
     private interface JsonParser<T> {
