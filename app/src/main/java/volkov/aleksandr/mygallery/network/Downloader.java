@@ -68,6 +68,7 @@ public class Downloader {
                                 String fileName = files.get(downloadId);
                                 Toast.makeText(context, "Download complete " + fileName,
                                         Toast.LENGTH_SHORT).show();
+                                Log.i(LOG_TAG, "File " + fileName + " is downloaded");
                             }
                         }
                     }

@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements ResponseListener<
     @Override
     public void onErrorResponse(VolleyError error) {
         Log.e(LOG_TAG, "error when download from yandex.drive " + error.getMessage());
-        Toast.makeText(this, "Ошибка при загрузке данных с Яндекс.Диск, попробуйте позже",
+        Toast.makeText(this, R.string.error_when_loading,
                 Toast.LENGTH_SHORT).show();
         hideProgressBar();
     }

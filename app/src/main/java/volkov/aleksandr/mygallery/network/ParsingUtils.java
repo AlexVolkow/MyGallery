@@ -64,7 +64,7 @@ public class ParsingUtils {
 
     /**
      * Parses an object of type Link
-     * {@see https://tech.yandex.ru/disk/api/reference/response-objects-docpage/#resource}
+     * {@see https://tech.yandex.ru/disk/api/reference/response-objects-docpage/#link}
      *
      * @param response json from server
      * @return string representation of url for resource
@@ -82,7 +82,7 @@ public class ParsingUtils {
      * @return string representation of error
      * @throws JSONException if missing required fields
      */
-    private static String parseError(JSONObject response) throws JSONException {
+    public static String parseError(JSONObject response) throws JSONException {
         if (response.has("error")) {
             String error = response.getString("error");
             String description = response.getString("description");

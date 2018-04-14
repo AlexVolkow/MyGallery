@@ -62,17 +62,17 @@ public class FullImageActivity extends AppCompatActivity implements ResponseList
         setContentView(R.layout.activity_full_image);
         ButterKnife.bind(this);
 
-        progressBar.setVisibility(View.VISIBLE);
+        openProgressBar();
 
         yandexDrive = new YandexDrive(getApplicationContext());
         downloader = new Downloader(getApplicationContext());
 
         boolean hasConnection = true;
         if (!AndroidHelper.hasConnection(this)) {
-            Toast.makeText(this, "Проверьте подключение к интернету", Toast.LENGTH_SHORT)
+            Toast.makeText(this, R.string.check_internet, Toast.LENGTH_SHORT)
                     .show();
             hasConnection = false;
-            progressBar.setVisibility(View.GONE);
+            hideProgressBar();
         }
 
         if (savedInstanceState != null) {
@@ -97,6 +97,14 @@ public class FullImageActivity extends AppCompatActivity implements ResponseList
 
         ActionBar ab = getSupportActionBar();
         ab.setDisplayHomeAsUpEnabled(true);
+    }
+
+    private void hideProgressBar() {
+        progressBar.setVisibility(View.GONE);
+    }
+
+    private void openProgressBar() {
+        progressBar.setVisibility(View.VISIBLE);
     }
 
 
@@ -147,7 +155,7 @@ public class FullImageActivity extends AppCompatActivity implements ResponseList
         if (imageResource != null && downloadUrl != null) {
             downloader.download(Uri.parse(downloadUrl), imageResource.getName());
         } else {
-            Toast.makeText(this, "Невозможно скачать файл, попробуйте позже",
+            Toast.makeText(this, R.string.impossible_download,
                     Toast.LENGTH_SHORT).show();
             if (imageResource == null) {
                 Log.e(LOG_TAG, "Unable to download file, imageResource is null");
@@ -189,7 +197,7 @@ public class FullImageActivity extends AppCompatActivity implements ResponseList
                 .into(photoView, new Callback() {
                     @Override
                     public void onSuccess() {
-                        progressBar.setVisibility(View.GONE);
+                        hideProgressBar();
                     }
 
                     @Override
