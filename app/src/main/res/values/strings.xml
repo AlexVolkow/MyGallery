@@ -5,4 +5,8 @@
     <string name="property">Свойства</string>
     <string name="download">Скачать</string>
     <string name="favorite">favorite</string>
+    <string name="confirmation">Подтверждение</string>
+    <string name="reload_question">Вы уверенны, что хотите перегрузить данные?</string>
+    <string name="YesRu">Да</string>
+    <string name="NoRu">Нет</string>
 </resources>

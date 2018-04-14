@@ -3,12 +3,16 @@ package volkov.aleksandr.mygallery.ui;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -152,6 +156,44 @@ public class MainActivity extends AppCompatActivity implements ResponseListener<
         outState.putParcelableArrayList(IMAGE_RESOURCES, (ArrayList<ImageResource>) resources);
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_context_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_reload:
+                AlertDialog dialog = createReloadDialog(this);
+                dialog.show();
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private AlertDialog createReloadDialog(MainActivity activity) {
+        AlertDialog.Builder ad = new AlertDialog.Builder(activity)
+                .setTitle(R.string.confirmation)
+                .setMessage(R.string.reload_question)
+                .setPositiveButton(R.string.YesRu, (dialog, arg1) -> {
+                    ReloadTask reloadTask = new ReloadTask(activity);
+                    reloadTask.execute();
+                })
+                .setNegativeButton(R.string.NoRu, (dialog, which) -> {
+                })
+                .setCancelable(true);
+        return ad.create();
+    }
+
+    private static void performDownloading(MainActivity activity) {
+        activity.yandexDrive.getPublicFolder(YandexDrive.FOLDER_URL, LIMIT, activity.mPreviewSize, activity);
+    }
+
     private static class LoadDataTask extends AsyncTask<Void, Void, List<ImageResource>> {
         private WeakReference<MainActivity> activityReference;
 
@@ -192,15 +234,11 @@ public class MainActivity extends AppCompatActivity implements ResponseListener<
         }
     }
 
-    private static void performDownloading(MainActivity activity) {
-        activity.yandexDrive.getPublicFolder(YandexDrive.FOLDER_URL, LIMIT, activity.mPreviewSize, activity);
-    }
-
     private static class LoadToDBTask extends AsyncTask<Void, Void, Void> {
         private List<ImageResource> resources;
         private WeakReference<MainActivity> activityReference;
 
-        public LoadToDBTask(MainActivity activity, List<ImageResource> resources) {
+        LoadToDBTask(MainActivity activity, List<ImageResource> resources) {
             this.resources = resources;
             this.activityReference = new WeakReference<>(activity);
         }
@@ -224,6 +262,33 @@ public class MainActivity extends AppCompatActivity implements ResponseListener<
                 activity.adapter.setImageResources(resources);
                 activity.hideProgressBar();
             }
+        }
+    }
+
+    private static class ReloadTask extends AsyncTask<Void, Void, Void> {
+        private WeakReference<MainActivity> activityReference;
+
+        ReloadTask(MainActivity activity) {
+            activityReference = new WeakReference<>(activity);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            MainActivity activity = activityReference.get();
+            if (activity != null) {
+                activity.openProgressBar();
+                activity.adapter.clear();
+            }
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            MainActivity activity = activityReference.get();
+            if (activity != null) {
+                activity.dbService.removeAllImageResources();
+                performDownloading(activity);
+            }
+            return null;
         }
     }
 }

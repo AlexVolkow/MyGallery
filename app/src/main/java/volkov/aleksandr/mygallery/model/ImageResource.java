@@ -6,15 +6,37 @@ import android.os.Parcelable;
 import org.joda.time.DateTime;
 
 /**
- * Created by Alexandr Volkov on 08.04.2018.
+ * Meta information about image.
  */
-
 public class ImageResource implements Parcelable {
+    /**
+     * Public url of picture in Yandex.Disk
+     */
     private String publicUrl;
+
+    /**
+     * Picture name
+     */
     private String name;
+
+    /**
+     * Creation time
+     */
     private DateTime created;
+
+    /**
+     * Time of last modification
+     */
     private DateTime modified;
+
+    /**
+     * link to preview
+     */
     private String preview;
+
+    /**
+     * Image size in bytes
+     */
     private int size;
 
     private ImageResource() {

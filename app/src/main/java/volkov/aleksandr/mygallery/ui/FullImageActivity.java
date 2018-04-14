@@ -161,7 +161,7 @@ public class FullImageActivity extends AppCompatActivity implements ResponseList
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.context_menu, menu);
+        inflater.inflate(R.menu.full_image_context_menu, menu);
         return true;
     }
 

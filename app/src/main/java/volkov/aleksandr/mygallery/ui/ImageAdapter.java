@@ -3,11 +3,9 @@ package volkov.aleksandr.mygallery.ui;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.DisplayMetrics;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 import android.view.View;
@@ -104,7 +102,7 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private RecyclerView.ViewHolder createImageHolder(ViewGroup parent, int size) {
         ImageView imageView = new ImageView(parent.getContext());
-        imageView.setPadding(2,2,2,2);
+        imageView.setPadding(2, 2, 2, 2);
 
         int width = mImageWidth / size;
         int height = mImageHeight / size;
@@ -161,6 +159,10 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         notifyDataSetChanged();
     }
 
+    public void clear() {
+        setImageResources(Collections.emptyList());
+    }
+
     /**
      * Method create time stamps for current data set.
      * Each time stamp corresponds to a certain day of the year.
@@ -193,7 +195,7 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
      * There are optimizations for landscape mode.
      *
      * @param from start of range
-     * @param to end of range
+     * @param to   end of range
      */
     private void updateScale(int from, int to) {
         // it's optimization for landscape mode

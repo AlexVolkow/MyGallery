@@ -13,6 +13,7 @@ import java.util.List;
 import volkov.aleksandr.mygallery.model.ImageResource;
 
 import static volkov.aleksandr.mygallery.db.ImageResourceContract.ImageResourceEntry;
+
 /**
  * Created by Alexandr Volkov on 11.04.2018.
  */
@@ -77,4 +78,8 @@ public class DBService {
         return res;
     }
 
+    public void removeAllImageResources() {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        db.delete(ImageResourceEntry.TABLE_NAME, null, null);
+    }
 }
