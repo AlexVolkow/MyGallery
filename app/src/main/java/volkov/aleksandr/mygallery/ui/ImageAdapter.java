@@ -18,6 +18,7 @@ import com.squareup.picasso.Picasso;
 
 import org.joda.time.DateTime;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -238,9 +239,8 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private void openFullImage(Context context, int idx) {
         Intent intent = new Intent();
         intent.setClass(context, FullImageActivity.class);
-        intent.putExtra(FullImageActivity.IMAGE, imageResources.get(idx));
+        intent.putParcelableArrayListExtra(FullImageActivity.IMAGE_RESOURCES, (ArrayList<ImageResource>) imageResources);
         intent.putExtra(FullImageActivity.CURR_IDX, idx);
-        intent.putExtra(FullImageActivity.SIZE, imageResources.size());
         context.startActivity(intent);
     }
 
