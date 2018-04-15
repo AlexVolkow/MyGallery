@@ -28,8 +28,8 @@ import static volkov.aleksandr.mygallery.utils.LogHelper.makeLogTag;
 public class Downloader {
     private static final String LOG_TAG = makeLogTag(Downloader.class);
 
-    private static final File DOWNLOAD_DIR =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+    private static final String DIR = "/mygallery";
+    public static final String FULL_PATH = Environment.getExternalStorageDirectory() + DIR;
 
     private DownloadManager downloadManager;
     private static Map<Long, String> files = new ConcurrentHashMap<>();
@@ -87,8 +87,9 @@ public class Downloader {
      * @param filename name of file
      */
     public void download(Uri url, String filename) {
-        if (!DOWNLOAD_DIR.exists()) {
-            if (!DOWNLOAD_DIR.mkdirs()) {
+        File downloadDir = new File(FULL_PATH);
+        if (!downloadDir.exists()) {
+            if (!downloadDir.mkdirs()) {
                 Toast.makeText(context, "Can't create Download directory", Toast.LENGTH_SHORT).show();
             }
         }
@@ -97,7 +98,7 @@ public class Downloader {
         request.setTitle(filename)
                 .setDescription("File is being downloaded...")
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, filename)
+                .setDestinationInExternalPublicDir(DIR, filename)
                 .allowScanningByMediaScanner();
 
         long id = downloadManager.enqueue(request);

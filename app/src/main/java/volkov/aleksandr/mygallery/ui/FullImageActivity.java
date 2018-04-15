@@ -1,8 +1,11 @@
 package volkov.aleksandr.mygallery.ui;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
@@ -121,6 +124,11 @@ public class FullImageActivity extends AppCompatActivity {
         });
     }
 
+    private boolean checkWritePermissions() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        == PackageManager.PERMISSION_GRANTED;
+    }
+
     private void updateTitle() {
         toolbar.setTitle((currIdx + 1) + " из " + size);
     }
@@ -148,6 +156,17 @@ public class FullImageActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(grantResults.length >= 2 && grantResults[0]== PackageManager.PERMISSION_GRANTED
+                && grantResults[1] == PackageManager.PERMISSION_GRANTED){
+            performDownload();
+        } else {
+            Toast.makeText(this, R.string.not_permissions, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
@@ -159,7 +178,11 @@ public class FullImageActivity extends AppCompatActivity {
                 return true;
 
             case R.id.download:
-                performDownload();
+                if (checkWritePermissions()) {
+                    performDownload();
+                } else {
+                    AndroidHelper.requestWriteStoragePermission(this);
+                }
                 return true;
 
             case R.id.action_share:

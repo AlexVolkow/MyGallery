@@ -12,4 +12,5 @@
     <string name="check_internet">Проверьте подключение к интернету</string>
     <string name="impossible_download">Невозможно скачать файл, попробуйте позже</string>
     <string name="error_when_loading">Ошибка при загрузке данных с Яндекс.Диск, попробуйте позже</string>
+    <string name="not_permissions">Недостаточно прав для скачивания файла</string>
 </resources>
